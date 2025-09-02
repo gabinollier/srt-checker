@@ -1,10 +1,27 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Upload, FileText, Check, XCircle, AlertTriangle, Clock, Type, AlignLeft, ArrowUpDown, X } from 'lucide-react';
+import { Upload, FileText, Check, Clock, Type, AlignLeft, ArrowUpDown } from 'lucide-react';
 import { parseSRT, validateSRT, SRTValidationResult, SRTSubtitle, ValidationCriteria } from '@/lib/srt-parser';
 
 type SortOption = 'number' | 'severity';
+
+interface TimeGapIssue {
+  subtitle: SRTSubtitle;
+  previousSubtitle: SRTSubtitle;
+  gap: number;
+}
+
+interface CharacterIssue {
+  subtitle: SRTSubtitle;
+  characterCount: number;
+}
+
+interface LineCharacterIssue {
+  subtitle: SRTSubtitle;
+  lineNumber: number;
+  characterCount: number;
+}
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -42,7 +59,7 @@ export default function Home() {
   }, [subtitles, minTimeGap, maxCharactersPerSubtitle, maxCharactersPerLine]);
 
   // Fonctions de tri
-  const sortTimeIssues = (issues: any[], sortBy: SortOption) => {
+  const sortTimeIssues = (issues: TimeGapIssue[], sortBy: SortOption) => {
     return [...issues].sort((a, b) => {
       if (sortBy === 'number') {
         return a.subtitle.id - b.subtitle.id;
@@ -52,7 +69,7 @@ export default function Home() {
     });
   };
 
-  const sortCharIssues = (issues: any[], sortBy: SortOption) => {
+  const sortCharIssues = (issues: CharacterIssue[], sortBy: SortOption) => {
     return [...issues].sort((a, b) => {
       if (sortBy === 'number') {
         return a.subtitle.id - b.subtitle.id;
@@ -62,7 +79,7 @@ export default function Home() {
     });
   };
 
-  const sortLineIssues = (issues: any[], sortBy: SortOption) => {
+  const sortLineIssues = (issues: LineCharacterIssue[], sortBy: SortOption) => {
     return [...issues].sort((a, b) => {
       if (sortBy === 'number') {
         return a.subtitle.id - b.subtitle.id;
@@ -102,7 +119,7 @@ export default function Home() {
     } finally {
       setIsProcessing(false);
     }
-  }, []);
+  }, [minTimeGap, maxCharactersPerSubtitle, maxCharactersPerLine]);
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -139,7 +156,7 @@ export default function Home() {
     } finally {
       setIsProcessing(false);
     }
-  }, []);
+  }, [minTimeGap, maxCharactersPerSubtitle, maxCharactersPerLine]);
 
   return (
     <div className="min-h-screen bg-white p-4">
@@ -310,7 +327,7 @@ export default function Home() {
                     <span className="font-semibold text-gray-900">Sous-titre {getSubtitleDisplay(issue.subtitle)}</span>
                     <br />
                     <div className="mt-1 text-xs text-gray-500">
-                      "{issue.subtitle.text}"
+                      &quot;{issue.subtitle.text}&quot;
                       <span className="text-gray-900"> ({issue.characterCount} caractères)</span>
                     </div>
                   </div>
@@ -333,7 +350,7 @@ export default function Home() {
                     </span>
                     <br />
                     <div className="mt-1 text-xs text-gray-500">
-                      "{issue.subtitle.text}"
+                      &quot;{issue.subtitle.text}&quot;
                       <span className="text-gray-900"> ({issue.characterCount} caractères)</span>
                     </div>
                   </div>
@@ -347,18 +364,18 @@ export default function Home() {
   );
 }
 
-interface ValidationCardProps {
+interface ValidationCardProps<T> {
   icon: React.ReactNode;
   title: string;
   description: string;
   isValid: boolean;
-  issues: any[];
+  issues: T[];
   sortBy: SortOption;
   onSortChange: (sortBy: SortOption) => void;
-  renderIssue: (issue: any) => React.ReactNode;
+  renderIssue: (issue: T) => React.ReactNode;
 }
 
-function ValidationCard({ icon, title, description, isValid, issues, sortBy, onSortChange, renderIssue }: ValidationCardProps) {
+function ValidationCard<T>({ icon, title, description, isValid, issues, sortBy, onSortChange, renderIssue }: ValidationCardProps<T>) {
   return (
     <div className="border border-gray-200 rounded-lg p-6">
       <div className="flex items-center space-x-3 mb-4">

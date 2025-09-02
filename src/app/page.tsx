@@ -20,6 +20,27 @@ export default function Home() {
   const [maxCharactersPerSubtitle, setMaxCharactersPerSubtitle] = useState<number>(70); // 70 caractères par défaut
   const [maxCharactersPerLine, setMaxCharactersPerLine] = useState<number>(35); // 35 caractères par défaut
 
+  // Option d'affichage
+  const [showTimecode, setShowTimecode] = useState<boolean>(false); // Afficher numéro par défaut
+
+  // Fonction utilitaire pour afficher l'identifiant du sous-titre
+  const getSubtitleDisplay = (subtitle: SRTSubtitle) => {
+    return showTimecode ? subtitle.startTime : `#${subtitle.id}`;
+  };
+
+  // Fonction pour relancer la validation avec les nouveaux critères
+  const revalidateWithNewCriteria = useCallback(() => {
+    if (subtitles.length > 0) {
+      const criteria: ValidationCriteria = {
+        minTimeGap,
+        maxCharactersPerSubtitle,
+        maxCharactersPerLine
+      };
+      const validation = validateSRT(subtitles, criteria);
+      setValidationResult(validation);
+    }
+  }, [subtitles, minTimeGap, maxCharactersPerSubtitle, maxCharactersPerLine]);
+
   // Fonctions de tri
   const sortTimeIssues = (issues: any[], sortBy: SortOption) => {
     return [...issues].sort((a, b) => {
@@ -66,7 +87,12 @@ export default function Home() {
     try {
       const content = await selectedFile.text();
       const parsedSubtitles = parseSRT(content);
-      const validation = validateSRT(parsedSubtitles);
+      const criteria: ValidationCriteria = {
+        minTimeGap,
+        maxCharactersPerSubtitle,
+        maxCharactersPerLine
+      };
+      const validation = validateSRT(parsedSubtitles, criteria);
       
       setSubtitles(parsedSubtitles);
       setValidationResult(validation);
@@ -98,7 +124,12 @@ export default function Home() {
     try {
       const content = await droppedFile.text();
       const parsedSubtitles = parseSRT(content);
-      const validation = validateSRT(parsedSubtitles);
+      const criteria: ValidationCriteria = {
+        minTimeGap,
+        maxCharactersPerSubtitle,
+        maxCharactersPerLine
+      };
+      const validation = validateSRT(parsedSubtitles, criteria);
       
       setSubtitles(parsedSubtitles);
       setValidationResult(validation);
@@ -157,6 +188,76 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Configuration des critères */}
+        <div className="mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Écart temporel minimum */}
+            <div className="space-y-2">
+              <label htmlFor="minTimeGap" className="block text-sm font-medium text-gray-700">
+                Écart temporel minimum (ms)
+              </label>
+              <input
+                id="minTimeGap"
+                type="number"
+                min="0"
+                value={minTimeGap}
+                onChange={(e) => setMinTimeGap(Number(e.target.value))}
+                onBlur={revalidateWithNewCriteria}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-neutral-700"
+              />
+            </div>
+
+            {/* Caractères par sous-titre */}
+            <div className="space-y-2">
+              <label htmlFor="maxCharsSubtitle" className="block text-sm font-medium text-gray-700">
+                Caractères max par sous-titre
+              </label>
+              <input
+                id="maxCharsSubtitle"
+                type="number"
+                min="1"
+                value={maxCharactersPerSubtitle}
+                onChange={(e) => setMaxCharactersPerSubtitle(Number(e.target.value))}
+                onBlur={revalidateWithNewCriteria}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-neutral-700"
+              />
+            </div>
+
+            {/* Caractères par ligne */}
+            <div className="space-y-2">
+              <label htmlFor="maxCharsLine" className="block text-sm font-medium text-gray-700">
+                Caractères max par ligne
+              </label>
+              <input
+                id="maxCharsLine"
+                type="number"
+                min="1"
+                value={maxCharactersPerLine}
+                onChange={(e) => setMaxCharactersPerLine(Number(e.target.value))}
+                onBlur={revalidateWithNewCriteria}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-neutral-700"
+              />
+            </div>
+          </div>
+          
+          {/* Option d'affichage */}
+          <div className="mb-6 py-3 ">
+            <div className="flex items-center space-x-3">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showTimecode}
+                  onChange={(e) => setShowTimecode(e.target.checked)}
+                  className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Afficher les timecodes de départ au lieu des numéros
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
         {/* Processing Indicator */}
         {isProcessing && (
           <div className="border border-gray-200 rounded-lg p-6 mb-8">
@@ -177,7 +278,7 @@ export default function Home() {
               <ValidationCard
                 icon={<Clock className="h-6 w-6" />}
                 title="Écart temporel"
-                description="Minimum 0,2 seconde entre sous-titres"
+                description={`Minimum ${minTimeGap}ms entre sous-titres`}
                 isValid={validationResult.minTimeGapIssues.length === 0}
                 issues={sortTimeIssues(validationResult.minTimeGapIssues, timeSortBy)}
                 sortBy={timeSortBy}
@@ -185,7 +286,7 @@ export default function Home() {
                 renderIssue={(issue) => (
                   <div key={`${issue.subtitle.id}-gap`} className="text-sm">
                     <span className="font-semibold text-gray-900">
-                      Entre les sous-titres #{issue.previousSubtitle.id} et #{issue.subtitle.id}
+                      Entre les sous-titres {getSubtitleDisplay(issue.previousSubtitle)} et {getSubtitleDisplay(issue.subtitle)}
                     </span>
                     <br />
                     <span className="text-gray-600">
@@ -199,14 +300,14 @@ export default function Home() {
               <ValidationCard
                 icon={<Type className="h-6 w-6" />}
                 title="Longueur des sous-titres"
-                description="Maximum 70 caractères par sous-titre"
+                description={`Maximum ${maxCharactersPerSubtitle} caractères par sous-titre`}
                 isValid={validationResult.maxCharactersIssues.length === 0}
                 issues={sortCharIssues(validationResult.maxCharactersIssues, charsSortBy)}
                 sortBy={charsSortBy}
                 onSortChange={setCharsSortBy}
                 renderIssue={(issue) => (
                   <div key={`${issue.subtitle.id}-chars`} className="text-sm">
-                    <span className="font-semibold text-gray-900">Sous-titre #{issue.subtitle.id}</span>
+                    <span className="font-semibold text-gray-900">Sous-titre {getSubtitleDisplay(issue.subtitle)}</span>
                     <br />
                     <div className="mt-1 text-xs text-gray-500">
                       "{issue.subtitle.text}"
@@ -220,7 +321,7 @@ export default function Home() {
               <ValidationCard
                 icon={<AlignLeft className="h-6 w-6" />}
                 title="Longueur des lignes"
-                description="Maximum 35 caractères par ligne"
+                description={`Maximum ${maxCharactersPerLine} caractères par ligne`}
                 isValid={validationResult.maxLineCharactersIssues.length === 0}
                 issues={sortLineIssues(validationResult.maxLineCharactersIssues, lineSortBy)}
                 sortBy={lineSortBy}
@@ -228,7 +329,7 @@ export default function Home() {
                 renderIssue={(issue) => (
                   <div key={`${issue.subtitle.id}-line-${issue.lineNumber}`} className="text-sm">
                     <span className="font-semibold text-gray-900">
-                      Sous-titre #{issue.subtitle.id}, ligne {issue.lineNumber}
+                      Sous-titre {getSubtitleDisplay(issue.subtitle)}, ligne {issue.lineNumber}
                     </span>
                     <br />
                     <div className="mt-1 text-xs text-gray-500">
@@ -276,7 +377,7 @@ function ValidationCard({ icon, title, description, isValid, issues, sortBy, onS
               onChange={(e) => onSortChange(e.target.value as SortOption)}
               className="text-sm border border-gray-400 rounded px-2 py-1 bg-white text-gray-800 font-medium shadow-sm focus:border-blue-500 focus:outline-none"
             >
-              <option value="number">Trier par numéro</option>
+              <option value="number">Par ordre chronologique</option>
               <option value="severity">Trier par écart</option>
             </select>
           </div>

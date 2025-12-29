@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SRT Checker
 
-## Getting Started
+A lightweight and modern web application to validate and analyze `.srt` subtitle files.
+Built with **Next.js**, **TypeScript**, and **Tailwind CSS**.
 
-First, run the development server:
+🔗 **Live Demo [here](https://srt-checker-x44f.vercel.app/)**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ensure your subtitles meet standard broadcasting or reading requirements with these checks:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Drag & Drop Interface**: Easily upload your `.srt` files.
+- **Minimum Time Gap**: Check if there is enough time between two subtitle blocks (configurable in ms).
+- **Length Validation**:
+  - **Max characters per subtitle**: Warns if a block contains too much text.
+  - **Max characters per line**: Ensures lines aren't too long for the screen.
+- **Display Options**: Toggle between showing subtitle index numbers or start timecodes for easier debugging.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠 Tech Stack
 
-## Learn More
+- Next.js] (App Router)
+- TypeScript
+- Tailwind CSS
 
-To learn more about Next.js, take a look at the following resources:
+## 📦 Getting Started
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+To run the project locally, follow these steps:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Prerequisites
 
-## Deploy on Vercel
+Make sure you have `node` and `npm` (or `yarn`/`pnpm`/`bun`) installed on your machine.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Installation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Clone the repository:
+   ```bash
+   git clone [https://github.com/gabinollier/srt-checker.git](https://github.com/gabinollier/srt-checker.git)
+   cd srt-checker
